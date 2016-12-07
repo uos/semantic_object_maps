@@ -1,6 +1,8 @@
 #include <lvr/io/ModelFactory.hpp>
 #include <lvr/geometry/HalfEdgeMesh.hpp>
 #include <lvr/classification/FurnitureFeatureClassifier.hpp>
+#include <semantic_object_maps_msgs/PlanarPatch.h>
+#include <semantic_object_maps_msgs/PlanarPatchArray.h>
 
 using namespace lvr;
 
@@ -50,28 +52,51 @@ int main(int argc, char** argv)
 	ModelFactory::saveModel( out_model, "optimized_mesh.ply");
 
 	// Test classifier
+	semantic_object_maps_msgs::PlanarPatchArray patch_array;
 	for(int i = 0; i < classifier.numFeatures(); i++)
 	{
 		PlanarClusterFeature pf = classifier.getFeature(i);
-		std::cout << "Index: " << pf.index << std::endl;
-		std::cout << "Centroid: " << pf.cx << " " << pf.cy << " " << pf.cz << std::endl;
-		std::cout << "W/H/D: " << pf.w << " " << pf.h << " " << pf.d << std::endl;
-		std::cout << "Normal: " << pf.nx << " " << pf.ny << " " << pf.nz << std::endl;
-		std::cout << "Area: " << pf.area << std::endl;
+		semantic_object_maps_msgs::PlanarPatch patch;
+
+		patch.area = pf.area;
+		patch.bbox.x = pf.w;
+		patch.bbox.y = pf.h;
+		patch.bbox.z = pf.d;
+		patch.normal.x = pf.nx;
+		patch.normal.y = pf.ny;
+		patch.normal.z = pf.nz;
+		patch.id = pf.index;
 		switch(pf.orientation)
 		{
 		case HORIZONTAL:
-			std::cout << "Orientation: Horizontal" << std::endl;
+			patch.orientation = 1;
 			break;
 		case VERTICAL:
-			std::cout << "Orientation: Vertical" << std::endl;
+			patch.orientation = 2;
 			break;
 		default:
-			std::cout << "Orientation: Undefined" << std::endl;
+			patch.orientation = 0;
 		}
 
+		patch_array.patches.push_back(patch);
 
-		std::cout << std::endl;
+//		std::cout << "Index: " << pf.index << std::endl;
+//		std::cout << "Centroid: " << pf.cx << " " << pf.cy << " " << pf.cz << std::endl;
+//		std::cout << "W/H/D: " << pf.w << " " << pf.h << " " << pf.d << std::endl;
+//		std::cout << "Normal: " << pf.nx << " " << pf.ny << " " << pf.nz << std::endl;
+//		std::cout << "Area: " << pf.area << std::endl;
+//		switch(pf.orientation)
+//		{
+//		case HORIZONTAL:
+//			std::cout << "Orientation: Horizontal" << std::endl;
+//			break;
+//		case VERTICAL:
+//			std::cout << "Orientation: Vertical" << std::endl;
+//			break;
+//		default:
+//			std::cout << "Orientation: Undefined" << std::endl;
+//		}
+//		std::cout << std::endl;
 	}
 
 	return 0;
