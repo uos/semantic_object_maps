@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS geometry_msgs message_generation std_msg
 add_message_files(
   FILES
   PlanarPatch.msg
+  PlanarPatchArray.msg
 )
 
 # Generate added messages and services with any dependencies listed here
