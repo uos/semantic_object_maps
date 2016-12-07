@@ -7,6 +7,7 @@ project(lvr_plane_classifier)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
+  semantic_object_maps_msgs
   std_msgs
 )
 
@@ -103,7 +104,7 @@ include_directories(${LVR_INCLUDE_DIRS})
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES lvr_plane_classifier
-#  CATKIN_DEPENDS roscpp rospy std_msgs
+  CATKIN_DEPENDS roscpp rospy semantic_object_maps_msgs std_msgs
 #  DEPENDS system_lib
 )
 
