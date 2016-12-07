@@ -4,6 +4,8 @@
 #include <semantic_object_maps_msgs/PlanarPatch.h>
 #include <semantic_object_maps_msgs/PlanarPatchArray.h>
 
+#include <ros/ros.h>
+
 using namespace lvr;
 
 const int 	PLANE_ITERATIONS 		= 3;
@@ -17,6 +19,12 @@ const int	CONTOUR_ITERATIONS 		= 0;
 
 int main(int argc, char** argv)
 {
+	ros::init(argc, argv, "lvr_classifier_node");
+	ros::NodeHandle nh;
+
+	ros::Publisher plane_publisher = nh.advertise<semantic_object_maps_msgs::PlanarPatchArray>("lvr_classified_planes", 1000);
+
+
 	// Load data from given file
 	ModelPtr model = ModelFactory::readModel( std::string(argv[1]));
 
@@ -58,14 +66,21 @@ int main(int argc, char** argv)
 		PlanarClusterFeature pf = classifier.getFeature(i);
 		semantic_object_maps_msgs::PlanarPatch patch;
 
-		patch.area = pf.area;
-		patch.bbox.x = pf.w;
-		patch.bbox.y = pf.h;
-		patch.bbox.z = pf.d;
-		patch.normal.x = pf.nx;
-		patch.normal.y = pf.ny;
-		patch.normal.z = pf.nz;
-		patch.id = pf.index;
+		patch.area = 		pf.area;
+		patch.bbox.x = 		pf.w;
+		patch.bbox.y = 		pf.h;
+		patch.bbox.z = 		pf.d;
+		patch.normal.x = 	pf.nx;
+		patch.normal.y = 	pf.ny;
+		patch.normal.z = 	pf.nz;
+		patch.centroid.x = 	pf.cx;
+		patch.centroid.y = 	pf.cy;
+		patch.centroid.z = 	pf.cz;
+
+		std::stringstream ss;
+		ss << pf.index;
+		patch.id = ss.str();
+
 		switch(pf.orientation)
 		{
 		case HORIZONTAL:
@@ -98,6 +113,9 @@ int main(int argc, char** argv)
 //		}
 //		std::cout << std::endl;
 	}
+
+	plane_publisher.publish(patch_array);
+	ros::spin();
 
 	return 0;
 }
