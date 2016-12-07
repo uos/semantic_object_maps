@@ -1,0 +1,6 @@
+.gradle/
+build/
+.classpath
+.project
+.settings/
+semantic_furniture_classifier/semantic_furniture_classifier_project/owl/catalog-v001.xml
