@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   semantic_object_maps_msgs
   std_msgs
+  tf
 )
 
 ## System dependencies are found with CMake's conventions
