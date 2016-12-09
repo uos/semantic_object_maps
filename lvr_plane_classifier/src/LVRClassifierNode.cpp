@@ -112,6 +112,8 @@ void generateMarkerArray(vector<visualization_msgs::Marker>& contour_markers, ve
 			contour_marker.color.g = 0.0;
 			contour_marker.color.b = 0.0;
 			contour_marker.scale.x = 0.01;
+			contour_marker.scale.y = 0.01;
+			contour_marker.scale.z = 0.01;
 			contour_marker.pose.orientation.x = 0;
 			contour_marker.pose.orientation.y = 0;
 			contour_marker.pose.orientation.z = 0;
@@ -139,6 +141,46 @@ void generateMarkerArray(vector<visualization_msgs::Marker>& contour_markers, ve
 			ROS_WARN("Region %lu has no contour", i);
 		}
 	}
+}
+
+/*******************************************************************************
+ * @brief 	Save the model in STL-format to /tmp and stores this as ressource
+ * 			in a mesh marker.
+ *
+ * @param	filename		The filename of the model
+ * @param	contour_markers	A pointer to model data
+ * @param	marker			A mesh marker
+ ******************************************************************************/
+void createMeshMarker(string filename, ModelPtr model, visualization_msgs::Marker& mesh_marker)
+{
+	// Construct name for calibration file
+	std::string stlFileName = "";
+	size_t dot = filename.find_last_of(".");
+	if (dot != std::string::npos)
+	{
+		stlFileName = "/tmp/" + filename.substr(0, dot) + ".stl";
+	}
+
+	string stlRessource = "file://" + stlFileName;
+
+	ModelFactory::saveModel(model, stlFileName);
+	mesh_marker.header.frame_id = "map";
+	mesh_marker.ns = "lvr_mesh";
+	mesh_marker.id = 1;
+	mesh_marker.type = visualization_msgs::Marker::MESH_RESOURCE;
+	mesh_marker.action = 0;
+	mesh_marker.color.a = 0.5;
+	mesh_marker.color.r = 0.0;
+	mesh_marker.color.g = 1.0;
+	mesh_marker.color.b = 0.0;
+	mesh_marker.scale.x = 1.0;
+	mesh_marker.scale.y = 1.0;
+	mesh_marker.scale.z = 1.0;
+	mesh_marker.pose.orientation.x = 0;
+	mesh_marker.pose.orientation.y = 0;
+	mesh_marker.pose.orientation.z = 0;
+	mesh_marker.pose.orientation.w = 1;
+	mesh_marker.mesh_resource= stlRessource;
 }
 
 /*******************************************************************************
@@ -214,6 +256,7 @@ int main(int argc, char** argv)
 
 	ros::Publisher plane_publisher = nh.advertise<semantic_object_maps_msgs::PlanarPatchArray>("lvr_classified_planes", 1000);
 	ros::Publisher contour_publisher = nh.advertise<visualization_msgs::MarkerArray>("lvr_plane_contours", 1000);
+	ros::Publisher mesh_publisher = nh.advertise<visualization_msgs::Marker>("lvr_mesh", 1000);
 
 	// Load data from given file
 	string modelFileName(argv[1]);
@@ -269,9 +312,14 @@ int main(int argc, char** argv)
 	visualization_msgs::MarkerArray markerArray;
 	generateMessages(classifier, contourMarkers, markerArray, patch_array);
 
-	// Publish the stuff
+	// Create a mesh marker
+	visualization_msgs::Marker mesh_marker;
+	createMeshMarker(modelFileName, model, mesh_marker);
+
+	// Publish stuff
 	plane_publisher.publish(patch_array);
 	contour_publisher.publish(markerArray);
+	mesh_publisher.publish(mesh_marker);
 	ros::spin();
 
 	return 0;
