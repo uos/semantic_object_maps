@@ -1,3 +1,7 @@
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/foreach.hpp>
+
 #include <lvr/io/ModelFactory.hpp>
 #include <lvr/geometry/HalfEdgeMesh.hpp>
 #include <lvr/classification/FurnitureFeatureClassifier.hpp>
@@ -7,24 +11,53 @@
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
-
 #include <tf/LinearMath/Transform.h>
-
-#include <Eigen/Geometry>
 
 using namespace lvr;
 
-const int 	PLANE_ITERATIONS 		= 3;
-const float NORMAL_THRESHOLD 		= 0.95;
-const int 	SMALL_REGION_THRESHOLD 	= 0;
-const int 	MIN_PLANE_SIZE 			= 7;
-const int	FILL_HOLES 				= 10;
-const float LINE_FUSION_THRESHOLD 	= 0.00999999978;
-const int	CONTOUR_ITERATIONS 		= 0;
+int 	PLANE_ITERATIONS 		= 3;
+float 	NORMAL_THRESHOLD 		= 0.95;
+int 	SMALL_REGION_THRESHOLD 	= 0;
+int 	MIN_PLANE_SIZE 			= 7;
+int		FILL_HOLES 				= 10;
+float 	LINE_FUSION_THRESHOLD 	= 0.00999999978;
+int		CONTOUR_ITERATIONS 		= 0;
 
 typedef ColorVertex<float, unsigned char>  cVertex;
 typedef Normal<float> cNormal;
 typedef Region<cVertex, cNormal> cRegion;
+
+void getParams(string filename)
+{
+	using boost::property_tree::ptree;
+	ptree pt;
+	read_xml(filename, pt);
+
+	ptree sub = pt.get_child("config");
+	NORMAL_THRESHOLD 		= sub.get<float>("normal_threshold", 0.95);
+	PLANE_ITERATIONS 		= sub.get<int>("plane_iterations", 3);
+	SMALL_REGION_THRESHOLD	= sub.get<int>("small_region_limit", 0);
+	MIN_PLANE_SIZE 			= sub.get<int>("min_plane_size", 7);
+	FILL_HOLES 				= sub.get<int>("fill_holes", 10);
+	LINE_FUSION_THRESHOLD 	= sub.get<float>("line_fusion", 0.009999);
+	CONTOUR_ITERATIONS 		= sub.get<int>("contour_iterations", 0);
+
+	ROS_INFO("Found parameter file %s: "
+			"\n Normal Threshold: %f"
+			"\n Plane Iterations: %d"
+			"\n Small Regions: %d"
+			"\n Min Planes: %d"
+			"\n Fill Holes: %d"
+			"\n Line Fusion %f"
+			"\n Contour Iterations: %d", filename.c_str(),
+			NORMAL_THRESHOLD,
+			PLANE_ITERATIONS,
+			SMALL_REGION_THRESHOLD,
+			MIN_PLANE_SIZE, FILL_HOLES,
+			LINE_FUSION_THRESHOLD,
+			CONTOUR_ITERATIONS);
+}
+
 
 /******************************************************************************
  * @brief	Transforms the mesh model according to the given transformation
@@ -207,6 +240,7 @@ void generateMessages(
 			PlanarClusterFeature pf = classifier.getFeature(i);
 			semantic_object_maps_msgs::PlanarPatch patch;
 
+			patch.header.frame_id = "map";
 			patch.area = 		pf.area;
 			patch.bbox.x = 		pf.w;
 			patch.bbox.y = 		pf.h;
@@ -249,6 +283,9 @@ void generateMessages(
 
 int main(int argc, char** argv)
 {
+	// Loads parameters fromconfig file
+	getParams("config.xml");
+
 	// Init ros and create two publishers: One for the classification message
 	// and one for the visualization markers
 	ros::init(argc, argv, "lvr_classifier_node");
