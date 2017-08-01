@@ -1,0 +1,42 @@
+Semantic furniture classifier input data file format
+====================================================
+
+* each line represents one plane
+
+* fields: id, pos x, pos y, pos z, normal x, normal y, normal z, size,
+  size after hole closing, bbox x, bbox y, bbox z, orientation, angle
+  
+  - orientation: h/v/u = horizontal/vertical/unknown
+  - pos x/y/z: coordinates of centroid vector
+  - normal x/y/z: normal vector
+  - angle: rotation around y axis in degrees (x is 0°; counterclockwise)
+	  + horizontal surfaces: biggest PCA component
+	  + vertical surfaces: normal vector
+    
+
+* fields are separated by a single space; no leading or trailing spaces
+
+* left-handed coordinate system: x is sideways, y is up, z is forward (depends
+  on scan format -- scans from the rotunit are left-handed, because slam6d uses
+  left-handed coordinate system)
+
+* units: in future: x/y/z are in m, size is in m^2 (at the moment, x/y/z are in
+  cm, size is in cm^2)
+
+* coordinate origin: in the future: y = 0 is ground level (at the moment, the
+  coordinate origin is at the height of the scanner, ~30 cm)
+
+
+Output format
+=============
+
+* id
+* type
+* centroid xyz
+* bbox xyz
+* angle
+	- special case chairs: centroid of seat, but angle of backrest (flipped towards seat)
+	- everything else (tables, shelves): biggest PCA component
+* centroid angle
+    - special case chairs: angle of vector from centroid of backrest to centroid of seat
+	- everything else: 0.0

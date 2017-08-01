@@ -1,0 +1,9 @@
+<config>
+  <normal_threshold>0.95</normal_threshold>
+  <plane_iterations>3</plane_iterations>
+  <small_region_limit>0</small_region_limit>
+  <min_plane_size>7</min_plane_size>
+  <fill_holes>10</fill_holes>
+  <line_fusion>0.0099999</line_fusion>
+  <contour_iterations>0</contour_iterations>
+</config>
