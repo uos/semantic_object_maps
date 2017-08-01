@@ -37,7 +37,6 @@ void getParams(string filename)
 {
 	using boost::property_tree::ptree;
 	ptree pt;
-	//ROS_INFO("Filemame: %s", filename);
 	read_xml(filename, pt);
 
 	ptree sub = pt.get_child("config");
@@ -101,7 +100,6 @@ tf::Transform getTransfromFromCalibration()
 	tf::Transform t;
 
 	float qx, qy, qz, qw, x, y, z;
-	//in >> qx >> qy >> qz >> qw >> x >> y >> z;
 	x = 0.186;
 	y = 0;
 	z = 0.84;
@@ -184,11 +182,7 @@ void createMeshMarker(ModelPtr model, visualization_msgs::Marker& mesh_marker)
 {
 	// Construct name for calibration file
 	std::string stlFileName = "meshFile";
-	//size_t dot = filename.find_last_of(".");
-	//if (dot != std::string::npos)
-	//{
 	stlFileName = "/tmp/meshFile1.stl";
-	//}
 
 	string stlRessource = "file://" + stlFileName;
 
