@@ -291,7 +291,6 @@ int main(int argc, char** argv)
 	ros::Publisher contour_publisher = nh.advertise<visualization_msgs::MarkerArray>("lvr_plane_contours", 1000);
 	ros::Publisher mesh_publisher = nh.advertise<visualization_msgs::Marker>("lvr_mesh", 1000);
 	ros::ServiceClient service = nh.serviceClient<mesh_msgs::TriggerMesh>("/kinfu/mesh_srv");
-	//loop_rate.sleep();
 	while(ros::ok())	
 	{
 		int vertexSize = 0;	
@@ -311,22 +310,14 @@ int main(int argc, char** argv)
 			for(int i = 0; i < faceSize; i++ )
 			{
 				faces[facePosition++] = (uint) srv.response.mesh.mesh.triangles[i].vertex_indices[0];
-				//ROS_INFO(" ind 0 %d",srv.response.mesh.mesh.triangles[i].vertex_indices[0]);
-				//ROS_INFO(" faces 0 %d", faces[facePosition -1]);
-				//ROS_INFO("facePosition %d",facePosition -1);
 				faces[facePosition++] = srv.response.mesh.mesh.triangles[i].vertex_indices[1];
-				//ROS_INFO(" ind 1 %d",faces[facePosition]);
 				faces[facePosition++] = srv.response.mesh.mesh.triangles[i].vertex_indices[2];
-				//ROS_INFO(" ind 2 %d",faces[facePosition]);
 			}
 			for(int i = 0; i < vertexSize; i++ )
 			{
 				vertices[vertexPosition++] = srv.response.mesh.mesh.vertices[i].x;
-				//ROS_INFO("vertex 0 %f",vertices[vertexPosition -1]);
 				vertices[vertexPosition++] = srv.response.mesh.mesh.vertices[i].y;
-				//ROS_INFO("vertex 1 %f",vertices[vertexPosition -1]);
 				vertices[vertexPosition++] = srv.response.mesh.mesh.vertices[i].z;
-				//ROS_INFO("vertex 2 %f",vertices[vertexPosition -1]);
 			}
 			
 			mBuffer->setFaceArray(faces,(size_t) faceSize);
@@ -337,7 +328,6 @@ int main(int argc, char** argv)
 			return 1;
 		}
 
-		//ROS_INFO_STREAM(mBuffer->getVertexArray((size_t&) vertexSize));
 		ModelPtr model(new Model(mBuffer));
 		// Search for a calibration for the given model
 		tf::Transform t = getTransfromFromCalibration();
