@@ -12,6 +12,15 @@
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <tf/LinearMath/Transform.h>
+<<<<<<< HEAD
+=======
+#include <mesh_msgs/TriangleMesh.h>
+#include <mesh_msgs/TriggerMesh.h>
+#include <std_msgs/String.h>
+#include <lvr/io/DataStruct.hpp>
+#include <lvr/io/MeshBuffer.hpp>
+#include <lvr/io/Model.hpp>
+>>>>>>> master
 
 using namespace lvr;
 
@@ -89,6 +98,7 @@ void transformModel(ModelPtr& model, const tf::Transform& transform)
  *
  * @param	filename		The name of the loaded model
  ******************************************************************************/
+<<<<<<< HEAD
 tf::Transform getTransfromFromCalibration(std::string filename)
 {
 	tf::Transform t;
@@ -113,6 +123,20 @@ tf::Transform getTransfromFromCalibration(std::string filename)
 
 	ROS_INFO("Found calibration %s: %f %f %f %f %f %f %f", calibrationFileName.c_str(), qx, qy, qz, qw, x, y, z);
 
+=======
+tf::Transform getTransfromFromCalibration()
+{
+	tf::Transform t;
+
+	float qx, qy, qz, qw, x, y, z;
+	x = 0.186;
+	y = 0.8;
+	z = -0.64;
+	qx = 1.25;
+	qy = -0.4;
+	qz = 0.6;
+	qw = 1;
+>>>>>>> master
 	tf::Vector3 origin(x, y, z);
 	tf::Quaternion quat(qx, qy, qz, qw);
 	t = tf::Transform(quat, origin);
@@ -184,6 +208,7 @@ void generateMarkerArray(vector<visualization_msgs::Marker>& contour_markers, ve
  * @param	contour_markers	A pointer to model data
  * @param	marker			A mesh marker
  ******************************************************************************/
+<<<<<<< HEAD
 void createMeshMarker(string filename, ModelPtr model, visualization_msgs::Marker& mesh_marker)
 {
 	// Construct name for calibration file
@@ -193,6 +218,13 @@ void createMeshMarker(string filename, ModelPtr model, visualization_msgs::Marke
 	{
 		stlFileName = "/tmp/" + filename.substr(0, dot) + ".stl";
 	}
+=======
+void createMeshMarker(ModelPtr model, visualization_msgs::Marker& mesh_marker)
+{
+	// Construct name for calibration file
+	std::string stlFileName = "meshFile";
+	stlFileName = "/tmp/meshFile1.stl";
+>>>>>>> master
 
 	string stlRessource = "file://" + stlFileName;
 
@@ -290,6 +322,7 @@ int main(int argc, char** argv)
 	// and one for the visualization markers
 	ros::init(argc, argv, "lvr_classifier_node");
 	ros::NodeHandle nh;
+<<<<<<< HEAD
 
 	ros::Publisher plane_publisher = nh.advertise<semantic_object_maps_msgs::PlanarPatchArray>("lvr_classified_planes", 1000);
 	ros::Publisher contour_publisher = nh.advertise<visualization_msgs::MarkerArray>("lvr_plane_contours", 1000);
@@ -361,3 +394,111 @@ int main(int argc, char** argv)
 
 	return 0;
 }
+=======
+	ros::Rate loop_rate(0.2);
+	ros::Publisher plane_publisher = nh.advertise<semantic_object_maps_msgs::PlanarPatchArray>("lvr_classified_planes", 1000);
+	ros::Publisher contour_publisher = nh.advertise<visualization_msgs::MarkerArray>("lvr_plane_contours", 1000);
+	ros::Publisher mesh_publisher = nh.advertise<visualization_msgs::Marker>("lvr_mesh", 1000);
+	ros::ServiceClient service = nh.serviceClient<mesh_msgs::TriggerMesh>("/kinfu/mesh_srv");
+	while(ros::ok())	
+	{
+		int vertexSize = 0;	
+		mesh_msgs::TriggerMesh srv;
+		srv.request.request = mesh_msgs::TriggerMesh::Request::GET;
+		MeshBufferPtr mBuffer(new MeshBuffer);
+		bool selvic = service.exists();
+		ROS_INFO("Checking if service exists... : %d",selvic);
+		if(service.call(srv))
+		{
+			uintArr faces(new uint[srv.response.mesh.mesh.triangles.size() * 3]);
+			floatArr vertices(new float[srv.response.mesh.mesh.vertices.size() * 3]);
+			int facePosition = 0;
+			int vertexPosition = 0;
+			int faceSize = srv.response.mesh.mesh.triangles.size();
+			vertexSize = srv.response.mesh.mesh.vertices.size();
+			for(int i = 0; i < faceSize; i++ )
+			{
+				faces[facePosition++] = (uint) srv.response.mesh.mesh.triangles[i].vertex_indices[0];
+				faces[facePosition++] = srv.response.mesh.mesh.triangles[i].vertex_indices[1];
+				faces[facePosition++] = srv.response.mesh.mesh.triangles[i].vertex_indices[2];
+			}
+			for(int i = 0; i < vertexSize; i++ )
+			{
+				vertices[vertexPosition++] = srv.response.mesh.mesh.vertices[i].x;
+				vertices[vertexPosition++] = srv.response.mesh.mesh.vertices[i].y;
+				vertices[vertexPosition++] = srv.response.mesh.mesh.vertices[i].z;
+			}
+			
+			mBuffer->setFaceArray(faces,(size_t) faceSize);
+			mBuffer->setVertexArray(vertices, (size_t) vertexSize);
+		}else
+		{
+			ROS_ERROR("NO MESH RECEIVED!");
+			return 1;
+		}
+
+		ModelPtr model(new Model(mBuffer));
+		// Search for a calibration for the given model
+		tf::Transform t = getTransfromFromCalibration();
+
+		// Transform the model according to the loaded transformation
+		transformModel(model, t.inverse());
+		// Generate half edge mesh representation of the loaded mesh
+		HalfEdgeMesh<cVertex, cNormal> mesh( model->m_mesh );
+		// Get a pointer to he planar regions and create a furniture classifier
+		vector<cRegion* >* regionPtr = mesh.getRegionsPtr();
+		FurnitureFeatureClassifier<cVertex , cNormal > classifier(regionPtr);
+		mesh.setClassifier(&classifier);
+
+		// Apply mesh optimization filters
+		mesh.cleanContours(CONTOUR_ITERATIONS);
+		mesh.setDepth(100);
+
+		mesh.optimizePlanes(
+				PLANE_ITERATIONS,
+				NORMAL_THRESHOLD,
+				MIN_PLANE_SIZE,
+				SMALL_REGION_THRESHOLD,
+				true);
+	
+		mesh.fillHoles(FILL_HOLES);
+		mesh.optimizePlaneIntersections();
+		mesh.restorePlanes(MIN_PLANE_SIZE);
+	
+		// Create a marker for each contour (we to generate them here since mesh.finalize
+		// will destroy the topology of the initial mesh when re-triangulating the
+		// contours
+		mesh.resetUsedFlags();
+		vector<visualization_msgs::Marker> contourMarkers;
+		generateMarkerArray(contourMarkers, regionPtr);
+
+		// Finalize and reduce mesh, includes classification
+		mesh.finalizeAndRetesselate(
+				false, // Textures not yet supported in this tool
+				LINE_FUSION_THRESHOLD);
+
+		// Create output model and save to file
+		ModelPtr out_model( new Model( mesh.meshBuffer() ) );
+		ModelFactory::saveModel( out_model, "optimized_mesh.ply");
+
+		// Generate final messages from classifier and pre-computed markers
+		semantic_object_maps_msgs::PlanarPatchArray patch_array;
+		visualization_msgs::MarkerArray markerArray;
+		generateMessages(classifier, contourMarkers, markerArray, patch_array);
+
+		// Create a mesh marker
+		visualization_msgs::Marker mesh_marker;
+		createMeshMarker(model, mesh_marker);
+	
+		// Publish stuff
+		plane_publisher.publish(patch_array);
+		contour_publisher.publish(markerArray);
+		mesh_publisher.publish(mesh_marker);
+		ros::spin();
+		//loop_rate.sleep();
+		//Maybe-TODO: Broadcast idle
+	}
+	return 0;
+}
+
+>>>>>>> master

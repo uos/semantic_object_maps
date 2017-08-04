@@ -10,7 +10,8 @@ find_package(catkin REQUIRED COMPONENTS
   semantic_object_maps_msgs
   std_msgs
   tf
-)
+  mesh_msgs
+  )
 
 ## System dependencies are found with CMake's conventions
 find_package(LVR REQUIRED)
