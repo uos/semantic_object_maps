@@ -12,15 +12,12 @@
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <tf/LinearMath/Transform.h>
-<<<<<<< HEAD
-=======
 #include <mesh_msgs/TriangleMesh.h>
 #include <mesh_msgs/TriggerMesh.h>
 #include <std_msgs/String.h>
 #include <lvr/io/DataStruct.hpp>
 #include <lvr/io/MeshBuffer.hpp>
 #include <lvr/io/Model.hpp>
->>>>>>> master
 
 using namespace lvr;
 
@@ -98,32 +95,6 @@ void transformModel(ModelPtr& model, const tf::Transform& transform)
  *
  * @param	filename		The name of the loaded model
  ******************************************************************************/
-<<<<<<< HEAD
-tf::Transform getTransfromFromCalibration(std::string filename)
-{
-	tf::Transform t;
-
-	// Construct name for calibration file
-	std::string calibrationFileName = "";
-	size_t dot = filename.find_last_of(".");
-	if (dot != std::string::npos)
-	{
-		calibrationFileName = filename.substr(0, dot) + ".calibration";
-	}
-
-	// Try to load calibration
-	ifstream in(calibrationFileName.c_str());
-	if(!in.good())
-	{
-		ROS_WARN ("Could not open calibration file %s", calibrationFileName.c_str());
-		return t;
-	}
-	float qx, qy, qz, qw, x, y, z;
-	in >> qx >> qy >> qz >> qw >> x >> y >> z;
-
-	ROS_INFO("Found calibration %s: %f %f %f %f %f %f %f", calibrationFileName.c_str(), qx, qy, qz, qw, x, y, z);
-
-=======
 tf::Transform getTransfromFromCalibration()
 {
 	tf::Transform t;
@@ -136,7 +107,6 @@ tf::Transform getTransfromFromCalibration()
 	qy = -0.4;
 	qz = 0.6;
 	qw = 1;
->>>>>>> master
 	tf::Vector3 origin(x, y, z);
 	tf::Quaternion quat(qx, qy, qz, qw);
 	t = tf::Transform(quat, origin);
@@ -208,23 +178,11 @@ void generateMarkerArray(vector<visualization_msgs::Marker>& contour_markers, ve
  * @param	contour_markers	A pointer to model data
  * @param	marker			A mesh marker
  ******************************************************************************/
-<<<<<<< HEAD
-void createMeshMarker(string filename, ModelPtr model, visualization_msgs::Marker& mesh_marker)
-{
-	// Construct name for calibration file
-	std::string stlFileName = "";
-	size_t dot = filename.find_last_of(".");
-	if (dot != std::string::npos)
-	{
-		stlFileName = "/tmp/" + filename.substr(0, dot) + ".stl";
-	}
-=======
 void createMeshMarker(ModelPtr model, visualization_msgs::Marker& mesh_marker)
 {
 	// Construct name for calibration file
 	std::string stlFileName = "meshFile";
 	stlFileName = "/tmp/meshFile1.stl";
->>>>>>> master
 
 	string stlRessource = "file://" + stlFileName;
 
@@ -322,79 +280,6 @@ int main(int argc, char** argv)
 	// and one for the visualization markers
 	ros::init(argc, argv, "lvr_classifier_node");
 	ros::NodeHandle nh;
-<<<<<<< HEAD
-
-	ros::Publisher plane_publisher = nh.advertise<semantic_object_maps_msgs::PlanarPatchArray>("lvr_classified_planes", 1000);
-	ros::Publisher contour_publisher = nh.advertise<visualization_msgs::MarkerArray>("lvr_plane_contours", 1000);
-	ros::Publisher mesh_publisher = nh.advertise<visualization_msgs::Marker>("lvr_mesh", 1000);
-
-	// Load data from given file
-	string modelFileName(argv[1]);
-	ModelPtr model = ModelFactory::readModel(modelFileName);
-
-	// Search for a calibration for the given model
-	tf::Transform t = getTransfromFromCalibration(modelFileName);
-
-	// Transform the model according to the loaded transformation
-	transformModel(model, t.inverse());
-
-	// Generate half edge mesh representation of the loaded mesh
-	HalfEdgeMesh<cVertex, cNormal > mesh( model->m_mesh );
-
-	// Get a pointer to he planar regions and create a furniture classifier
-	vector<cRegion* >* regionPtr = mesh.getRegionsPtr();
-	FurnitureFeatureClassifier<cVertex , cNormal > classifier(regionPtr);
-	mesh.setClassifier(&classifier);
-
-	// Apply mesh optimization filters
-	mesh.cleanContours(CONTOUR_ITERATIONS);
-	mesh.setDepth(100);
-
-	mesh.optimizePlanes(
-			PLANE_ITERATIONS,
-			NORMAL_THRESHOLD,
-			MIN_PLANE_SIZE,
-			SMALL_REGION_THRESHOLD,
-			true);
-
-	mesh.fillHoles(FILL_HOLES);
-	mesh.optimizePlaneIntersections();
-	mesh.restorePlanes(MIN_PLANE_SIZE);
-
-	// Create a marker for each contour (we to generate them here since mesh.finalize
-	// will destroy the topology of the initial mesh when re-triangulating the
-	// contours
-	mesh.resetUsedFlags();
-	vector<visualization_msgs::Marker> contourMarkers;
-	generateMarkerArray(contourMarkers, regionPtr);
-
-	// Finalize and reduce mesh, includes classification
-	mesh.finalizeAndRetesselate(
-			false, // Textures not yet supported in this tool
-			LINE_FUSION_THRESHOLD);
-
-	// Create output model and save to file
-	ModelPtr out_model( new Model( mesh.meshBuffer() ) );
-	ModelFactory::saveModel( out_model, "optimized_mesh.ply");
-
-	// Generate final messages from classifier and pre-computed markers
-	semantic_object_maps_msgs::PlanarPatchArray patch_array;
-	visualization_msgs::MarkerArray markerArray;
-	generateMessages(classifier, contourMarkers, markerArray, patch_array);
-
-	// Create a mesh marker
-	visualization_msgs::Marker mesh_marker;
-	createMeshMarker(modelFileName, model, mesh_marker);
-
-	// Publish stuff
-	plane_publisher.publish(patch_array);
-	contour_publisher.publish(markerArray);
-	mesh_publisher.publish(mesh_marker);
-	ros::spin();
-
-	return 0;
-}
-=======
 	ros::Rate loop_rate(0.2);
 	ros::Publisher plane_publisher = nh.advertise<semantic_object_maps_msgs::PlanarPatchArray>("lvr_classified_planes", 1000);
 	ros::Publisher contour_publisher = nh.advertise<visualization_msgs::MarkerArray>("lvr_plane_contours", 1000);
@@ -501,4 +386,3 @@ int main(int argc, char** argv)
 	return 0;
 }
 
->>>>>>> master
